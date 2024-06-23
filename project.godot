@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="Godot ImGui Extension"
+run/main_scene="res://entry.tscn"
 config/features=PackedStringArray("4.3", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
