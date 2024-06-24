@@ -58,50 +58,71 @@ internal static class ObjectInspector
                     _cachedProperties[className] = prop;
                 }
 
-                for (var index = 0; index < prop.Count; index++)
+                if (ImGui.BeginTable($"##split{className}", 2, ImGuiTableFlags.Resizable))
                 {
-                    var info = prop[index];
-                    var value = godotObject.Get(info.Name);
+                    ImGui.TableSetupScrollFreeze(0,1);
+                    ImGui.TableSetupColumn("Property");
+                    ImGui.TableSetupColumn("Value");
+                    ImGui.TableHeadersRow();
+                    
+                    for (var index = 0; index < prop.Count; index++)
+                    {
+                        var info = prop[index];
+                        var value = godotObject.Get(info.Name);
 
-                    if (info.Type is Variant.Type.Nil)
-                    {
-                        continue;
-                    }
-
-                    if (info.Usage is PropertyUsageFlags.Group or PropertyUsageFlags.Category)
-                    {
-                        if (hasGroup && displayNextWidget) ImGui.TreePop();
-                        else hasGroup = true;
-                        ImGui.Separator();
-                        displayNextWidget = ImGui.TreeNode($"{info.Name}");
-                    }
-                    else if (displayNextWidget)
-                    {
-                        if (info.Type == Variant.Type.Object)
+                        if (info.Type is Variant.Type.Nil)
                         {
-                            var obj = value.AsGodotObject();
-                            if (ImGui.Button($"{obj}"))
+                            continue;
+                        }
+
+                        if (info.Usage is PropertyUsageFlags.Group or PropertyUsageFlags.Category)
+                        {
+                            if (hasGroup && displayNextWidget) ImGui.TreePop();
+                            else hasGroup = true;
+                            ImGui.Separator();
+                            displayNextWidget = ImGui.TreeNode($"{info.Name}");
+                        }
+                        else if (displayNextWidget)
+                        {
+                            ImGui.TableNextRow();
+                            ImGui.TableSetColumnIndex(0);
+                            ImGui.Text($"{info.Name}");
+
+                            if (ImGui.IsItemHovered())
                             {
-                                godotObject = obj;
+                                ImGui.SetTooltip($"{info.Name}\n{info.Hint}\n{info.HintString}\n{info.Usage}\n{info.Type}");
+                            }
+                            
+                            ImGui.TableSetColumnIndex(1);
+                            if (info.Type == Variant.Type.Object)
+                            {
+                                var obj = value.AsGodotObject();
+                                if (obj is not null && GodotObject.IsInstanceValid(obj))
+                                {
+                                    if (ImGui.Button($"{obj}"))
+                                    {
+                                        godotObject = obj;
+                                    }
+                                }
+                                else
+                                {
+                                    ImGui.Text("NULL");
+                                }
+                            }
+                            else
+                            {
+                                if (VariantExt.ImEditVariant($"##{info.Name}Inspector Edit",
+                                        ref value, info.Hint, info.HintString))
+                                {
+                                    godotObject.Set(info.Name, value);
+                                }
                             }
                         }
-                        else
-                        {
-                            if (VariantExt.ImEditVariant($"{info.Name}##Inspector Edit",
-                                    ref value, info.Hint, info.HintString))
-                            {
-                                godotObject.Set(info.Name, value);
-                            }
-                        }
                     }
-
-                    if (ImGui.IsItemHovered())
-                    {
-                        ImGui.SetTooltip(
-                            $"{info.Name}\n{info.Hint}\n{info.HintString}\n{info.Usage}\n{info.Type}");
-                    }
+                    
+                    ImGui.EndTable();
                 }
-
+                
                 if (hasGroup && displayNextWidget) ImGui.TreePop();
             }
 
