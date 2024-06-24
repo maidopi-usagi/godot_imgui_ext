@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Godot;
 using ImGuiNET;
 
@@ -9,20 +8,16 @@ internal static class SceneTreeViewer
 {
     private static Node Root { get; } = ((SceneTree)Engine.GetMainLoop()).Root;
 
-    private static readonly List<NodePath> _nodePaths = [];
-
-    public static NodePath CurrentSelectingNodePath => _nodePaths.Last();
-
-    public static bool DrawSceneTree()
+    public static bool DrawSceneTree(ref List<NodePath> _nodePaths)
     {
         ImGui.Begin("Draw Scene Tree");
         ImGui.Text($"{string.Join(",", _nodePaths)}");
-        var clicked = ShowNodeStructure(Root);
+        var clicked = ShowNodeStructure(Root, ref _nodePaths);
         ImGui.End();
         return clicked;
     }
     
-    public static bool ShowNodeStructure(Node node)
+    public static bool ShowNodeStructure(Node node,ref  List<NodePath> _nodePaths)
     {
         var clicked = false;
         var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick
@@ -90,7 +85,7 @@ internal static class SceneTreeViewer
                 for (var index = 0; index < nodes.Count; index++)
                 {
                     var child = nodes[index];
-                    clicked |= ShowNodeStructure(child);
+                    clicked |= ShowNodeStructure(child, ref _nodePaths);
                 }
                 ImGui.TreePop();
             }

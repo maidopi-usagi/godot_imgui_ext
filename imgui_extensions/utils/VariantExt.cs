@@ -1,18 +1,13 @@
 using Godot;
 using ImGuiNET;
+using static ImGuiNET.ImGuiTableFlags;
 
 namespace GodotImGuiExtension;
 
 internal static class VariantExt
 {
-    private const ImGuiTableFlags TableFlags = ImGuiTableFlags.ScrollX 
-                                               | ImGuiTableFlags.ScrollY
-                                               | ImGuiTableFlags.RowBg 
-                                               | ImGuiTableFlags.BordersOuter
-                                               | ImGuiTableFlags.BordersV 
-                                               | ImGuiTableFlags.Hideable
-                                               | ImGuiTableFlags.Reorderable
-                                               | ImGuiTableFlags.Resizable;
+    private const ImGuiTableFlags TableFlags = ScrollX | ScrollY | RowBg | BordersOuter | BordersV
+                                               | Hideable | Reorderable | Resizable;
 
     public static bool ImEditValue<[MustBeVariant] T>(string label, ref T value, PropertyHint hint = PropertyHint.None,
         string hintString = "")

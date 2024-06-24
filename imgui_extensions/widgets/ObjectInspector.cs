@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Bridge;
 using Godot.Collections;
 using ImGuiNET;
 
@@ -18,7 +17,7 @@ internal static class ObjectInspector
         public readonly Variant.Type Type = (Variant.Type)dictionary["type"].As<int>();
     }
 
-    private static System.Collections.Generic.Dictionary<StringName, List<PropertyInfo>> ClassProperties = [];
+    private static readonly System.Collections.Generic.Dictionary<StringName, List<PropertyInfo>> _cachedProperties = [];
 
     public static void ShowInspector(ref GodotObject godotObject)
     {
@@ -50,13 +49,13 @@ internal static class ObjectInspector
             {
                 var hasGroup = false;
                 var displayNextWidget = true;
-                if (!ClassProperties.TryGetValue(className, out var prop))
+                if (!_cachedProperties.TryGetValue(className, out var prop))
                 {
                     var classGetPropertyList = isScript
                         ? script.GetScriptPropertyList()
                         : ClassDB.ClassGetPropertyList(className, true);
                     prop = classGetPropertyList.Select(dict => new PropertyInfo(dict)).ToList();
-                    ClassProperties[className] = prop;
+                    _cachedProperties[className] = prop;
                 }
 
                 for (var index = 0; index < prop.Count; index++)
