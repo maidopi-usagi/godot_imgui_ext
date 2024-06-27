@@ -1,7 +1,6 @@
 using Godot;
 using Godot.Collections;
 using GodotImGuiExtension;
-using MethodTimer;
 
 public partial class JsonEditor : Node2D
 {
@@ -37,7 +36,6 @@ public partial class JsonEditor : Node2D
 		JsonFilePath = "C:/Users/maido/Downloads/data.json";
 	}
 
-	[Time]
 	public override void _Process(double delta)
 	{
 		VariantExt.DictionaryEditor(_testDictionary, "balabalal");

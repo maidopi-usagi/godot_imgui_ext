@@ -7,7 +7,7 @@ using static ImGuiNET.ImGuiTableFlags;
 
 namespace GodotImGuiExtension;
 
-internal static class VariantExt
+public static class VariantExt
 {
     public static int MaxColumns = 16;
     

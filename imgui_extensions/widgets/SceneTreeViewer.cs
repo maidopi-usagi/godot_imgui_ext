@@ -4,9 +4,9 @@ using ImGuiNET;
 
 namespace GodotImGuiExtension;
 
-internal static class SceneTreeViewer
+public static class SceneTreeViewer
 {
-    private static Node Root { get; } = ((SceneTree)Engine.GetMainLoop()).Root;
+    private static Node Root => ((SceneTree)Engine.GetMainLoop()).Root;
 
     public static bool DrawSceneTree(ref List<NodePath> _nodePaths)
     {
@@ -16,8 +16,8 @@ internal static class SceneTreeViewer
         ImGui.End();
         return clicked;
     }
-    
-    public static bool ShowNodeStructure(Node node,ref  List<NodePath> _nodePaths)
+
+    public static bool ShowNodeStructure(Node node, ref List<NodePath> _nodePaths)
     {
         var clicked = false;
         var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick
@@ -29,7 +29,7 @@ internal static class SceneTreeViewer
         {
             flags |= ImGuiTreeNodeFlags.Selected;
         }
-        
+
         var hasChildren = node.GetChildCount() > 0;
         var nodeName = $"{(node.Name.IsEmpty ? node.GetClass() : node.Name)}##{node}";
         if (!hasChildren)
@@ -52,6 +52,7 @@ internal static class SceneTreeViewer
                     _nodePaths.Clear();
                     _nodePaths.Add(nodePath);
                 }
+
                 clicked = true;
             }
         }
@@ -77,8 +78,10 @@ internal static class SceneTreeViewer
                     _nodePaths.Clear();
                     _nodePaths.Add(nodePath);
                 }
+
                 clicked = true;
             }
+
             if (nodeOpen)
             {
                 var nodes = node.GetChildren();
@@ -87,6 +90,7 @@ internal static class SceneTreeViewer
                     var child = nodes[index];
                     clicked |= ShowNodeStructure(child, ref _nodePaths);
                 }
+
                 ImGui.TreePop();
             }
         }

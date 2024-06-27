@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Godot ImGui Extension"
 run/main_scene="res://test_case/01_multi_mesh_instance.tscn"
-config/features=PackedStringArray("4.3", "C#", "Forward Plus")
+config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 run/max_fps=120
 config/icon="res://icon.svg"
 

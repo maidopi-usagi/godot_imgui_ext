@@ -3,11 +3,10 @@ using System.Linq;
 using Godot;
 using Godot.Collections;
 using ImGuiNET;
-using MethodTimer;
 
 namespace GodotImGuiExtension;
 
-internal static class ObjectInspector
+public static class ObjectInspector
 {
     private struct PropertyInfo(Dictionary dictionary)
     {
@@ -20,13 +19,12 @@ internal static class ObjectInspector
 
     private static readonly System.Collections.Generic.Dictionary<StringName, List<PropertyInfo>> _cachedProperties = [];
 
-    [Time]
-    public static void ShowInspector(ref GodotObject godotObject)
+    public static void ShowInspector(ref GodotObject? godotObject)
     {
+        if (godotObject == null) return;
         ImGui.Begin("Node Inspector");
-        
         var counter = 0;
-        if (godotObject is null || !GodotObject.IsInstanceValid(godotObject))
+        if (!GodotObject.IsInstanceValid(godotObject))
         {
             ImGui.End();
             return;
@@ -54,7 +52,7 @@ internal static class ObjectInspector
                 if (!_cachedProperties.TryGetValue(className, out var prop))
                 {
                     var classGetPropertyList = isScript
-                        ? script.GetScriptPropertyList()
+                        ? script!.GetScriptPropertyList()
                         : ClassDB.ClassGetPropertyList(className, true);
                     prop = classGetPropertyList.Select(dict => new PropertyInfo(dict)).ToList();
                     _cachedProperties[className] = prop;
@@ -62,15 +60,15 @@ internal static class ObjectInspector
 
                 if (ImGui.BeginTable($"##split{className}", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.RowBg))
                 {
-                    ImGui.TableSetupScrollFreeze(0,1);
+                    ImGui.TableSetupScrollFreeze(0, 1);
                     ImGui.TableSetupColumn("Property");
                     ImGui.TableSetupColumn("Value");
                     ImGui.TableHeadersRow();
-                    
+
                     for (var index = 0; index < prop.Count; index++)
                     {
                         var info = prop[index];
-                        
+
                         if (info.Usage is PropertyUsageFlags.Group or PropertyUsageFlags.Category)
                         {
                             ImGui.TableNextRow();
@@ -102,7 +100,7 @@ internal static class ObjectInspector
                             {
                                 ImGui.SetTooltip($"{info.Name}\n{info.Hint}\n{info.HintString}\n{info.Usage}\n{info.Type}");
                             }
-                            
+
                             ImGui.TableSetColumnIndex(1);
                             var value = godotObject.Get(info.Name);
                             if (info.Type == Variant.Type.Object)
@@ -136,12 +134,12 @@ internal static class ObjectInspector
                         ImGui.TableSetColumnIndex(0);
                         ImGui.TreePop();
                     }
-                    
+
                     ImGui.EndTable();
                 }
             }
 
-            if (isScript)
+            if (isScript && script is not null)
             {
                 script = script.GetBaseScript();
             }
@@ -152,11 +150,11 @@ internal static class ObjectInspector
 
             counter++;
         }
-        
+
         ImGui.End();
     }
 
-    private static bool IsValid(GodotObject obj)
+    private static bool IsValid(GodotObject? obj)
     {
         return obj is not null && GodotObject.IsInstanceValid(obj);
     }

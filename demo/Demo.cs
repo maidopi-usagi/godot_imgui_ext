@@ -4,11 +4,10 @@ using Godot;
 using GodotImGuiExtension;
 using ImGuiGodot;
 using ImGuiNET;
-using MethodTimer;
 
 public partial class Demo : Node
 {
-	private GodotObject _inspectingObject = null;
+	private GodotObject? _inspectingObject = null;
 	private List<NodePath> _nodePaths = [];
 	private float _plotMaxValue = 180.0f;
 	private float _plotMaxValueTarget = 180.0f;
@@ -49,7 +48,6 @@ public partial class Demo : Node
 	[Export]
 	public bool Flag { get; set; } = false;
 
-	[Time]
 	public override void _Process(double delta)
 	{
 		if (ImGui.BeginMainMenuBar())
