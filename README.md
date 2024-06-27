@@ -6,8 +6,8 @@
 Some customized imgui widgets for Godot used in my personal projects.
 Not very optimized, but maybe useful enough to do some daily debugging.
 
-![image](https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/71c9bcf0-e627-4659-b5c9-855878af47fe)
-![image](https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/0c0eec39-6208-4838-ac28-5d756ce84533)
+<img src="https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/71c9bcf0-e627-4659-b5c9-855878af47fe" height="300">
+<img src="https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/0c0eec39-6208-4838-ac28-5d756ce84533" height="300">
 
 
 ## Features
