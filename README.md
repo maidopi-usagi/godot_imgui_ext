@@ -8,7 +8,7 @@ Not very optimized, but maybe useful enough to do some daily debugging.
 
 <img src="https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/71c9bcf0-e627-4659-b5c9-855878af47fe" height="300">
 <img src="https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/0c0eec39-6208-4838-ac28-5d756ce84533" height="300">
-
+<img src="https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/ae02bc6c-0f9c-4caf-b6d0-8156fa49d5f7" height="300">
 
 ## Features
 
@@ -16,8 +16,7 @@ Not very optimized, but maybe useful enough to do some daily debugging.
 * Runtime SceneTree inspector
 * Runtime GodotObject inspector, with oranized structure and supports Godot export hints
 * Nested data types
-* Make IME working
-* (opt) Method execution time profiling tools with a barely simple plot
+* Fixes to make IME working
 
 ## Demo and some usecases
 
@@ -38,12 +37,20 @@ https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/82036697-7662-4
 
 ## Usage
 
-## Planned work(May be shipped in an optional package)
+## Planned work(May be shipped in another package)
 - [ ] Migrate and clean up some existing widgets from my personal project
-   - [ ] Datasheet editing toolset (Excel-like editor with Godot features)
+   - [ ] Datasheet/Table editing toolset (Excel-like editor with Godot features)
    - [ ] Runtime logger with filtering and backtraces
    - [ ] Runtime console
    - [ ] Resource picker with fuzzy match and filtering
+     
+
+![image](https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/7c97fa79-e8d0-4e7e-adef-8edf3b23de3f)
+![image](https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/13673043-794c-4e7d-bc8c-711f7d925663)
+
+
 - [ ] Better profiling tools, with common builtin engine stastics and custom measurement sources
 - [ ] UX improvements
+- [ ] ImPlot branch
+
 New ideas are also welcomed~
