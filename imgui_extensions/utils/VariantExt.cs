@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using ImGuiNET;
 using static ImGuiNET.ImGuiTableFlags;
@@ -7,8 +10,9 @@ namespace GodotImGuiExtension;
 internal static class VariantExt
 {
     private const ImGuiTableFlags TableFlags = ScrollX | ScrollY | RowBg | BordersOuter | BordersV
-                                               | Hideable | Reorderable | Resizable;
-
+                                               | Hideable | Reorderable | Resizable | SizingFixedFit;
+    
+    
     public static bool ImEditValue<[MustBeVariant] T>(string label, ref T value, PropertyHint hint = PropertyHint.None,
         string hintString = "")
     {
@@ -27,7 +31,7 @@ internal static class VariantExt
         return valueChanged;
     }
 
-    public static bool ImEditVariant(string label, ref Variant variant, PropertyHint hint = PropertyHint.None,
+    public static unsafe bool ImEditVariant(string label, ref Variant variant, PropertyHint hint = PropertyHint.None,
         string hintString = "")
     {
         switch (variant.VariantType)
@@ -45,11 +49,12 @@ internal static class VariantExt
             }
             case Variant.Type.Float:
             {
-                var floatValue = (float)variant.AsDouble();
+                var doubleValue = variant.AsDouble();
                 if (hint == PropertyHint.Range)
                 {
                     if (hintString.Contains("radians_as_degrees"))
                     {
+                        var floatValue = (float)doubleValue;
                         if (ImGui.SliderAngle(label, ref floatValue))
                         {
                             variant = floatValue;
@@ -59,19 +64,28 @@ internal static class VariantExt
                     else
                     {
                         var paramsFloats = hintString.Split(",");
-                        if (ImGui.SliderFloat(label, ref floatValue, paramsFloats[0].ToFloat(),
-                                paramsFloats[1].ToFloat()))
+                        var ptr = new IntPtr(&doubleValue);
+                        double doubleMin = paramsFloats[0].ToFloat();
+                        double doubleMax = paramsFloats[1].ToFloat();
+                        var ptrMin = new IntPtr(&doubleMin);
+                        var ptrMax = new IntPtr(&doubleMax);
+                        if (ImGui.SliderScalar(label, ImGuiDataType.Double, ptr, ptrMin, ptrMax))
                         {
-                            variant = floatValue;
+                            variant = doubleValue;
                             return true;
                         }
                     }
                 }
                 else
                 {
-                    if (ImGui.DragFloat(label, ref floatValue, 0.01f))
+                    var ptr = new IntPtr(&doubleValue);
+                    double doubleMin = double.MinValue;
+                    double doubleMax = double.MaxValue;
+                    var ptrMin = new IntPtr(&doubleMin);
+                    var ptrMax = new IntPtr(&doubleMax);
+                    if (ImGui.DragScalar(label, ImGuiDataType.Double, ptr, 0.01f, ptrMin, ptrMax))
                     {
-                        variant = floatValue;
+                        variant = doubleValue;
                         return true;
                     }
                 }
@@ -80,10 +94,11 @@ internal static class VariantExt
             }
             case Variant.Type.Int:
             {
-                var intValue = (int)variant.AsInt64();
+                var longValue = variant.AsInt64();
                 if (hint == PropertyHint.Enum)
                 {
                     var enums = hintString.Split(",");
+                    var intValue = (int)longValue;
                     if (ImGui.Combo(label, ref intValue, enums, enums.Length))
                     {
                         variant = intValue;
@@ -92,22 +107,22 @@ internal static class VariantExt
                 }
                 else if (hint is PropertyHint.Layers3DPhysics or PropertyHint.Layers2DPhysics)
                 {
-                    uint uintValue = (uint)intValue;
+                    uint uintValue = (uint)longValue;
                     var valueChanged = false;
-                    ImGui.Text(label);
                     ImGui.BeginChild(label, new(0.0f, ImGui.GetTextLineHeight() * 8));
                     ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X / 8.0f);
                     for (int i = 0; i < 32; i++)
                     {
                         var u = 1U << i;
                         var flag = (uintValue & u) != 0;
-                        if (ImGui.Checkbox($"##{i}{label}", ref flag))
+                        ImGui.PushID(i);
+                        if (ImGui.Checkbox(label, ref flag))
                         {
                             uintValue = flag ? uintValue + u : uintValue - u;
                             variant = uintValue;
                             valueChanged = true;
                         }
-
+                        ImGui.PopID();
                         if (i % 8 != 7)
                         {
                             ImGui.SameLine();
@@ -121,11 +136,61 @@ internal static class VariantExt
                         return true;
                     }
                 }
+                else if (hint is PropertyHint.Layers3DRender or PropertyHint.Layers2DRender)
+                {
+                    uint uintValue = (uint)longValue;
+                    var valueChanged = false;
+                    ImGui.BeginChild(label, new(0.0f, ImGui.GetTextLineHeight() * 4));
+                    ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X / 8.0f);
+                    for (int i = 0; i < 20; i++)
+                    {
+                        var u = 1U << i;
+                        var flag = (uintValue & u) != 0;
+                        ImGui.PushID(i);
+                        if (ImGui.Checkbox(label, ref flag))
+                        {
+                            uintValue = flag ? uintValue + u : uintValue - u;
+                            variant = uintValue;
+                            valueChanged = true;
+                        }
+                        ImGui.PopID();
+                        if (i % 10 != 9)
+                        {
+                            ImGui.SameLine();
+                        }
+                    }
+
+                    ImGui.PopItemWidth();
+                    ImGui.EndChild();
+                    if (valueChanged)
+                    {
+                        return true;
+                    }
+                }
+                else if (hint == PropertyHint.Range)
+                {
+                    var paramsInts = hintString.Split(",");
+                    var ptr = new IntPtr(&longValue);
+                    long longMin = paramsInts[0].ToInt();
+                    long longMax = paramsInts[1].ToInt();
+                    var ptrMin = new IntPtr(&longMin);
+                    var ptrMax = new IntPtr(&longMax);
+                    if (ImGui.SliderScalar(label, ImGuiDataType.S64, ptr, ptrMin, ptrMax))
+                    {
+                        variant = longValue;
+                        return true;
+                    }
+                }
                 else
                 {
-                    if (ImGui.DragInt(label, ref intValue, 1))
+                    var ptr = new IntPtr(&longValue);
+                    var doubleMin = long.MinValue;
+                    var doubleMax = long.MaxValue;
+                    var ptrMin = new IntPtr(&doubleMin);
+                    var ptrMax = new IntPtr(&doubleMax);
+                    if (ImGui.DragScalar(label, ImGuiDataType.S64, ptr, 0.2f, ptrMin, ptrMax))
                     {
-                        variant = intValue;
+                        variant = longValue;
                         return true;
                     }
                 }
@@ -224,36 +289,44 @@ internal static class VariantExt
             }
             case Variant.Type.Dictionary:
             {
-                var dictValue = variant.AsGodotDictionary();
                 var dictChanged = false;
-                foreach (var kv in dictValue)
+                var dictValue = variant.AsGodotDictionary();
+                var strId = $"{variant.VariantType}##{label}";
+                if (ImGui.TreeNode(strId))
                 {
-                    var valueVariant = kv.Value;
-                    if (ImEditVariant($"{kv.Key}##{label}", ref valueVariant))
+                    foreach (var kv in dictValue.WithIndex())
                     {
-                        dictValue[kv.Key] = valueVariant;
-                        dictChanged = true;
+                        var valueVariant = kv.item.Value;
+                        ImGui.PushID(kv.index);
+                        if (ImEditVariant(label, ref valueVariant, hint, hintString))
+                        {
+                            dictValue[kv.item.Key] = valueVariant;
+                            dictChanged = true;
+                        }
+                        ImGui.PopID();
                     }
+                    ImGui.TreePop();
                 }
 
-                if (dictChanged) return true;
+                if (dictChanged)
+                {
+                    return true;
+                }
                 break;
             }
             case Variant.Type.Array:
             {
                 var arrValue = variant.AsGodotArray();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditGodotArray(label, ref arrValue))
                 {
-                    variant = arrValue;
                     return true;
                 }
-
                 break;
             }
             case Variant.Type.PackedByteArray:
             {
                 var arrValue = variant.AsByteArray();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -264,7 +337,7 @@ internal static class VariantExt
             case Variant.Type.PackedInt32Array:
             {
                 var arrValue = variant.AsInt32Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -275,7 +348,7 @@ internal static class VariantExt
             case Variant.Type.PackedInt64Array:
             {
                 var arrValue = variant.AsInt64Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -286,7 +359,7 @@ internal static class VariantExt
             case Variant.Type.PackedFloat32Array:
             {
                 var arrValue = variant.AsFloat32Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -297,7 +370,7 @@ internal static class VariantExt
             case Variant.Type.PackedFloat64Array:
             {
                 var arrValue = variant.AsFloat64Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -308,7 +381,7 @@ internal static class VariantExt
             case Variant.Type.PackedStringArray:
             {
                 var arrValue = variant.AsStringArray();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -319,7 +392,7 @@ internal static class VariantExt
             case Variant.Type.PackedVector2Array:
             {
                 var arrValue = variant.AsVector2Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -330,7 +403,7 @@ internal static class VariantExt
             case Variant.Type.PackedVector3Array:
             {
                 var arrValue = variant.AsVector3Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -341,7 +414,7 @@ internal static class VariantExt
             case Variant.Type.PackedVector4Array:
             {
                 var arrValue = variant.AsVector4Array();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -352,7 +425,7 @@ internal static class VariantExt
             case Variant.Type.PackedColorArray:
             {
                 var arrValue = variant.AsColorArray();
-                if (ImEditArray(label, ref arrValue))
+                if (ImEditArrayClipped(label, ref arrValue))
                 {
                     variant = arrValue;
                     return true;
@@ -362,7 +435,8 @@ internal static class VariantExt
             }
             case Variant.Type.Rect2:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -372,19 +446,19 @@ internal static class VariantExt
                 var size = rectValue.Size;
                 var pos = rectValue.Position;
                 var valueChanged = false;
-                if (ImEditValue($"Pos##{label}", ref pos))
+                if (ImEditValue("Pos", ref pos))
                 {
                     rectValue.Position = pos;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"End##{label}", ref end))
+                if (ImEditValue("End", ref end))
                 {
                     rectValue.End = end;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Size##{label}", ref size))
+                if (ImEditValue("Size", ref size))
                 {
                     rectValue.Size = size;
                     valueChanged = true;
@@ -401,7 +475,8 @@ internal static class VariantExt
             }
             case Variant.Type.Rect2I:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -411,19 +486,19 @@ internal static class VariantExt
                 var size = rectValue.Size;
                 var pos = rectValue.Position;
                 var valueChanged = false;
-                if (ImEditValue($"Pos##{label}", ref pos))
+                if (ImEditValue("Pos", ref pos))
                 {
                     rectValue.Position = pos;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"End##{label}", ref end))
+                if (ImEditValue("End", ref end))
                 {
                     rectValue.End = end;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Size##{label}", ref size))
+                if (ImEditValue("Size", ref size))
                 {
                     rectValue.Size = size;
                     valueChanged = true;
@@ -440,7 +515,8 @@ internal static class VariantExt
             }
             case Variant.Type.Transform2D:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -450,19 +526,19 @@ internal static class VariantExt
                 var x = xform2DValue.X;
                 var y = xform2DValue.Y;
                 var valueChanged = false;
-                if (ImEditValue($"Origin##{label}", ref origin))
+                if (ImEditValue("Origin", ref origin))
                 {
                     xform2DValue.Origin = origin;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"X##{label}", ref x))
+                if (ImEditValue("X", ref x))
                 {
                     xform2DValue.X = x;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Y##{label}", ref y))
+                if (ImEditValue("Y", ref y))
                 {
                     xform2DValue.Y = y;
                     valueChanged = true;
@@ -479,7 +555,8 @@ internal static class VariantExt
             }
             case Variant.Type.Plane:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -491,31 +568,31 @@ internal static class VariantExt
                 var y = planeValue.Y;
                 var z = planeValue.Z;
                 var valueChanged = false;
-                if (ImEditValue($"Distance##{label}", ref d))
+                if (ImEditValue("Distance", ref d))
                 {
                     planeValue.D = d;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"End##{label}", ref normal))
+                if (ImEditValue("End", ref normal))
                 {
                     planeValue.Normal = normal;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"X##{label}", ref x))
+                if (ImEditValue("X", ref x))
                 {
                     planeValue.X = x;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Y##{label}", ref y))
+                if (ImEditValue("Y", ref y))
                 {
                     planeValue.Y = y;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Z##{label}", ref z))
+                if (ImEditValue("Z", ref z))
                 {
                     planeValue.Z = z;
                     valueChanged = true;
@@ -532,7 +609,8 @@ internal static class VariantExt
             }
             case Variant.Type.Quaternion:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -543,25 +621,25 @@ internal static class VariantExt
                 var y = quatValue.Y;
                 var z = quatValue.Z;
                 var valueChanged = false;
-                if (ImEditValue($"W##{label}", ref w))
+                if (ImEditValue("W", ref w))
                 {
                     quatValue.W = w;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"X##{label}", ref x))
+                if (ImEditValue("X", ref x))
                 {
                     quatValue.X = x;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Y##{label}", ref y))
+                if (ImEditValue("Y", ref y))
                 {
                     quatValue.Y = y;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Z##{label}", ref z))
+                if (ImEditValue("Z", ref z))
                 {
                     quatValue.Z = z;
                     valueChanged = true;
@@ -578,7 +656,8 @@ internal static class VariantExt
             }
             case Variant.Type.Aabb:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -588,19 +667,19 @@ internal static class VariantExt
                 var size = aabbValue.Size;
                 var pos = aabbValue.Position;
                 var valueChanged = false;
-                if (ImEditValue($"Pos##{label}", ref pos))
+                if (ImEditValue("Pos", ref pos))
                 {
                     aabbValue.Position = pos;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"End##{label}", ref end))
+                if (ImEditValue("End", ref end))
                 {
                     aabbValue.End = end;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Size##{label}", ref size))
+                if (ImEditValue("Size", ref size))
                 {
                     aabbValue.Size = size;
                     valueChanged = true;
@@ -617,7 +696,8 @@ internal static class VariantExt
             }
             case Variant.Type.Basis:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -627,19 +707,19 @@ internal static class VariantExt
                 var y = basisValue.Y;
                 var z = basisValue.Z;
                 var valueChanged = false;
-                if (ImEditValue($"X##{label}", ref x))
+                if (ImEditValue("X", ref x))
                 {
                     basisValue.X = x;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Y##{label}", ref y))
+                if (ImEditValue("Y", ref y))
                 {
                     basisValue.Y = y;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Z##{label}", ref z))
+                if (ImEditValue("Z", ref z))
                 {
                     basisValue.Z = z;
                     valueChanged = true;
@@ -656,7 +736,8 @@ internal static class VariantExt
             }
             case Variant.Type.Transform3D:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -665,13 +746,13 @@ internal static class VariantExt
                 var origin = xform2DValue.Origin;
                 var basis = xform2DValue.Basis;
                 var valueChanged = false;
-                if (ImEditValue($"Origin##{label}", ref origin))
+                if (ImEditValue("Origin", ref origin))
                 {
                     xform2DValue.Origin = origin;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Basis##{label}", ref basis))
+                if (ImEditValue("Basis", ref basis))
                 {
                     xform2DValue.Basis = basis;
                     valueChanged = true;
@@ -688,7 +769,8 @@ internal static class VariantExt
             }
             case Variant.Type.Projection:
             {
-                if (!ImGui.TreeNode(label))
+                var strId = $"{variant.VariantType}##{label}";
+                if (!ImGui.TreeNode(strId))
                 {
                     break;
                 }
@@ -699,25 +781,25 @@ internal static class VariantExt
                 var y = projectionValue.Y;
                 var z = projectionValue.Z;
                 var valueChanged = false;
-                if (ImEditValue($"W##{label}", ref w))
+                if (ImEditValue("W", ref w))
                 {
                     projectionValue.W = w;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"X##{label}", ref x))
+                if (ImEditValue("X", ref x))
                 {
                     projectionValue.X = x;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Y##{label}", ref y))
+                if (ImEditValue("Y", ref y))
                 {
                     projectionValue.Y = y;
                     valueChanged = true;
                 }
 
-                if (ImEditValue($"Z##{label}", ref z))
+                if (ImEditValue("Z", ref z))
                 {
                     projectionValue.Z = z;
                     valueChanged = true;
@@ -746,11 +828,10 @@ internal static class VariantExt
                 break;
             }
         }
-
         return false;
     }
 
-    private static unsafe bool ImEditArray<[MustBeVariant] T>(string label, ref T[] arrValue)
+    private static unsafe bool ImEditArrayClipped<[MustBeVariant] T>(string label, ref T[] arrValue)
     {
         var valueChanged = false;
         var rowCount = arrValue.Length;
@@ -759,7 +840,7 @@ internal static class VariantExt
             if (ImGui.BeginTable(label, 2, TableFlags, new System.Numerics.Vector2(0.0f, 240.0f)))
             {
                 ImGui.TableSetupScrollFreeze(0, 1);
-                ImGui.TableSetupColumn("Index", ImGuiTableColumnFlags.WidthFixed, 32);
+                ImGui.TableSetupColumn("Index", ImGuiTableColumnFlags.WidthFixed, 64);
                 ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
                 ImGui.TableSetColumnIndex(0);
@@ -776,19 +857,20 @@ internal static class VariantExt
                         if (row >= rowCount) continue;
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);
-                        ImGui.Text($"{row}");
+                        ImGui.Text(row.ToString());
                         ImGui.TableSetColumnIndex(1);
                         var value = arrValue[row];
                         if (value is not Variant variant)
                         {
                             variant = Variant.From(value);
                         }
-
-                        if (ImEditVariant($"##{row}{label}", ref variant))
+                        ImGui.PushID(row);
+                        if (ImEditVariant("row", ref variant))
                         {
                             arrValue[row] = variant.As<T>();
                             valueChanged = true;
                         }
+                        ImGui.PopID();
                     }
                 }
 
@@ -801,7 +883,7 @@ internal static class VariantExt
         return valueChanged;
     }
 
-    private static unsafe bool ImEditArray(string label, ref Godot.Collections.Array arrValue)
+    private static bool ImEditGodotArray(string label, ref Godot.Collections.Array arrValue)
     {
         var valueChanged = false;
         var rowCount = arrValue.Count;
@@ -810,31 +892,32 @@ internal static class VariantExt
             if (ImGui.BeginTable(label, 2, TableFlags, new System.Numerics.Vector2(0.0f, 240.0f)))
             {
                 ImGui.TableSetupScrollFreeze(0, 1);
-                ImGui.TableSetupColumn("Index", ImGuiTableColumnFlags.WidthFixed, 32);
+                ImGui.TableSetupColumn("Index", ImGuiTableColumnFlags.WidthFixed, 64);
                 ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
                 ImGui.TableSetColumnIndex(0);
                 ImGui.TableHeader("IDX");
                 ImGui.TableSetColumnIndex(1);
                 ImGui.TableHeader("VALUE");
-                var clipperData = new ImGuiListClipper();
-                var listClipperPtr = new ImGuiListClipperPtr(&clipperData);
-                listClipperPtr.Begin(rowCount);
-                while (listClipperPtr.Step())
+
+                for (var row = 0; row < rowCount; row++)
                 {
-                    for (var row = listClipperPtr.DisplayStart; row < listClipperPtr.DisplayEnd; row++)
+                    if (row >= rowCount) continue;
+                    ImGui.TableNextRow();
+                    if (ImGui.TableSetColumnIndex(0))
                     {
-                        if (row >= rowCount) continue;
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
                         ImGui.Text($"{row}");
-                        ImGui.TableSetColumnIndex(1);
+                    }
+                    if (ImGui.TableSetColumnIndex(1))
+                    {
                         var value = arrValue[row];
-                        if (ImEditVariant($"##{row}{label}", ref value))
+                        ImGui.PushID(row);
+                        if (ImEditVariant("##", ref value))
                         {
                             arrValue[row] = value;
                             valueChanged = true;
                         }
+                        ImGui.PopID();
                     }
                 }
 
@@ -916,4 +999,49 @@ internal static class VariantExt
     {
         return new(vec.X, vec.Y, vec.Z, vec.W);
     }
+
+    public static bool DictionaryEditor(Godot.Collections.Dictionary dict, string label)
+    {
+        const ImGuiTableFlags tableFlags = ScrollX | ScrollY | RowBg
+                                           | BordersOuter | BordersV |
+                                           Hideable | Reorderable | Resizable;
+        var valueChanged = false;
+        if (ImGui.BeginTable(label, 2, tableFlags, new System.Numerics.Vector2(0.0f, -100.0f)))
+        {
+            ImGui.TableSetupScrollFreeze(0, 1);
+            ImGui.TableSetupColumn("Index");
+            ImGui.TableSetupColumn("ResName");
+            ImGui.TableHeadersRow();
+
+            foreach (var pair in dict.WithIndex())
+            {
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text($"{pair.item.Key}");
+                ImGui.TableSetColumnIndex(1);
+                var variant = pair.item.Value;
+                ImGui.PushID(pair.index);
+                if (ImEditVariant("##bal", ref variant))
+                {
+                    dict[pair.item.Key] = variant;
+                    valueChanged = true;
+                }
+                ImGui.PopID();
+            }
+            
+            ImGui.EndTable();
+        }
+        
+        return valueChanged;
+    }
+
+    public static bool TypedArrayEditor<T>(this IEnumerable<T> list, string label)
+    {
+        return false;
+    }
+}
+
+public static class IEnumerableExtensions {
+    public static IEnumerable<(T item, int index)> WithIndex<T>(this IEnumerable<T> self)       
+        => self.Select((item, index) => (item, index));
 }

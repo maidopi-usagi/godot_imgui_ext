@@ -3,6 +3,7 @@ using System.Linq;
 using Godot;
 using Godot.Collections;
 using ImGuiNET;
+using MethodTimer;
 
 namespace GodotImGuiExtension;
 
@@ -19,6 +20,7 @@ internal static class ObjectInspector
 
     private static readonly System.Collections.Generic.Dictionary<StringName, List<PropertyInfo>> _cachedProperties = [];
 
+    [Time]
     public static void ShowInspector(ref GodotObject godotObject)
     {
         ImGui.Begin("Node Inspector");
@@ -48,7 +50,7 @@ internal static class ObjectInspector
             if (ImGui.CollapsingHeader(className))
             {
                 var hasGroup = false;
-                var displayNextWidget = true;
+                var displayChild = true;
                 if (!_cachedProperties.TryGetValue(className, out var prop))
                 {
                     var classGetPropertyList = isScript
@@ -58,7 +60,7 @@ internal static class ObjectInspector
                     _cachedProperties[className] = prop;
                 }
 
-                if (ImGui.BeginTable($"##split{className}", 2, ImGuiTableFlags.Resizable))
+                if (ImGui.BeginTable($"##split{className}", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.RowBg))
                 {
                     ImGui.TableSetupScrollFreeze(0,1);
                     ImGui.TableSetupColumn("Property");
@@ -68,21 +70,28 @@ internal static class ObjectInspector
                     for (var index = 0; index < prop.Count; index++)
                     {
                         var info = prop[index];
-                        var value = godotObject.Get(info.Name);
-
-                        if (info.Type is Variant.Type.Nil)
-                        {
-                            continue;
-                        }
-
+                        
                         if (info.Usage is PropertyUsageFlags.Group or PropertyUsageFlags.Category)
                         {
-                            if (hasGroup && displayNextWidget) ImGui.TreePop();
-                            else hasGroup = true;
-                            ImGui.Separator();
-                            displayNextWidget = ImGui.TreeNode($"{info.Name}");
+                            ImGui.TableNextRow();
+                            if (hasGroup && displayChild)
+                            {
+                                ImGui.TableSetColumnIndex(0);
+                                ImGui.TreePop();
+                            }
+                            else
+                            {
+                                hasGroup = true;
+                            }
+                            ImGui.TableSetColumnIndex(0);
+                            displayChild = ImGui.TreeNode($"{info.Name}");
+                            ImGui.TableSetColumnIndex(1);
+                            ImGui.TextDisabled("(...)");
                         }
-                        else if (displayNextWidget)
+                        else if (info.Type is Variant.Type.Nil)
+                        {
+                        }
+                        else if (displayChild)
                         {
                             ImGui.TableNextRow();
                             ImGui.TableSetColumnIndex(0);
@@ -94,10 +103,11 @@ internal static class ObjectInspector
                             }
                             
                             ImGui.TableSetColumnIndex(1);
+                            var value = godotObject.Get(info.Name);
                             if (info.Type == Variant.Type.Object)
                             {
                                 var obj = value.AsGodotObject();
-                                if (obj is not null && GodotObject.IsInstanceValid(obj))
+                                if (IsValid(obj))
                                 {
                                     if (ImGui.Button($"{obj}"))
                                     {
@@ -106,12 +116,12 @@ internal static class ObjectInspector
                                 }
                                 else
                                 {
-                                    ImGui.Text("NULL");
+                                    ImGui.Button("NULL");
                                 }
                             }
                             else
                             {
-                                if (VariantExt.ImEditVariant($"##{info.Name}Inspector Edit",
+                                if (VariantExt.ImEditVariant(info.Name,
                                         ref value, info.Hint, info.HintString))
                                 {
                                     godotObject.Set(info.Name, value);
@@ -119,11 +129,15 @@ internal static class ObjectInspector
                             }
                         }
                     }
+
+                    if (hasGroup && displayChild)
+                    {
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.TreePop();
+                    }
                     
                     ImGui.EndTable();
                 }
-                
-                if (hasGroup && displayNextWidget) ImGui.TreePop();
             }
 
             if (isScript)
@@ -139,5 +153,10 @@ internal static class ObjectInspector
         }
         
         ImGui.End();
+    }
+
+    private static bool IsValid(GodotObject obj)
+    {
+        return obj is not null && GodotObject.IsInstanceValid(obj);
     }
 }

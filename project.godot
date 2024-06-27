@@ -11,13 +11,19 @@ config_version=5
 [application]
 
 config/name="Godot ImGui Extension"
-run/main_scene="res://entry.tscn"
+run/main_scene="res://test_case/02_json_editor.tscn"
 config/features=PackedStringArray("4.3", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 ImGuiRoot="*res://addons/imgui-godot/data/ImGuiRoot.tscn"
+Demo="*res://demo/Demo.cs"
+
+[display]
+
+window/size/mode=2
+window/vsync/vsync_mode=0
 
 [dotnet]
 
@@ -26,3 +32,11 @@ project/assembly_name="Godot ImGui Extension"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/imgui-godot/plugin.cfg")
+
+[input]
+
+cycle_managed_memory_monitor={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194335,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
