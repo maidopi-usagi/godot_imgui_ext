@@ -23,6 +23,11 @@ public partial class Demo : Node
 		}
 	}
 
+	private readonly List<string> _testCases = [
+		"res://test_case/01_multi_mesh_instance.tscn",
+		"res://test_case/02_json_editor.tscn"
+	];
+
 	public override void _Ready()
 	{
 		ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
@@ -51,7 +56,13 @@ public partial class Demo : Node
 		{
 			if (ImGui.BeginMenu("Test Cases"))
 			{
-				
+				foreach (var testCasePath in _testCases)
+				{
+					if (ImGui.MenuItem(testCasePath.GetFile()))
+					{
+						GetTree().ChangeSceneToFile(testCasePath);
+					}
+				}
 				ImGui.EndMenu();
 			}
 			

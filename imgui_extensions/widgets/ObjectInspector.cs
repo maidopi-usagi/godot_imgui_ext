@@ -85,6 +85,7 @@ internal static class ObjectInspector
                             }
                             ImGui.TableSetColumnIndex(0);
                             displayChild = ImGui.TreeNode($"{info.Name}");
+                            if (displayChild) continue;
                             ImGui.TableSetColumnIndex(1);
                             ImGui.TextDisabled("(...)");
                         }

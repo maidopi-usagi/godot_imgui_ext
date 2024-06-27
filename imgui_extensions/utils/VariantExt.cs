@@ -9,6 +9,8 @@ namespace GodotImGuiExtension;
 
 internal static class VariantExt
 {
+    public static int MaxColumns = 16;
+    
     private const ImGuiTableFlags TableFlags = ScrollX | ScrollY | RowBg | BordersOuter | BordersV
                                                | Hideable | Reorderable | Resizable | SizingFixedFit;
     
@@ -116,11 +118,15 @@ internal static class VariantExt
                         var u = 1U << i;
                         var flag = (uintValue & u) != 0;
                         ImGui.PushID(i);
-                        if (ImGui.Checkbox(label, ref flag))
+                        if (ImGui.Checkbox(string.Empty, ref flag))
                         {
                             uintValue = flag ? uintValue + u : uintValue - u;
                             variant = uintValue;
                             valueChanged = true;
+                        }
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.SetTooltip(i.ToString());
                         }
                         ImGui.PopID();
                         if (i % 8 != 7)
@@ -147,11 +153,15 @@ internal static class VariantExt
                         var u = 1U << i;
                         var flag = (uintValue & u) != 0;
                         ImGui.PushID(i);
-                        if (ImGui.Checkbox(label, ref flag))
+                        if (ImGui.Checkbox(string.Empty, ref flag))
                         {
                             uintValue = flag ? uintValue + u : uintValue - u;
                             variant = uintValue;
                             valueChanged = true;
+                        }
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.SetTooltip(i.ToString());
                         }
                         ImGui.PopID();
                         if (i % 10 != 9)
@@ -291,14 +301,13 @@ internal static class VariantExt
             {
                 var dictChanged = false;
                 var dictValue = variant.AsGodotDictionary();
-                var strId = $"{variant.VariantType}##{label}";
-                if (ImGui.TreeNode(strId))
+                if (ImGui.TreeNode(label))
                 {
                     foreach (var kv in dictValue.WithIndex())
                     {
                         var valueVariant = kv.item.Value;
                         ImGui.PushID(kv.index);
-                        if (ImEditVariant(label, ref valueVariant, hint, hintString))
+                        if (ImEditVariant(kv.item.Key.ToString(), ref valueVariant, hint, hintString))
                         {
                             dictValue[kv.item.Key] = valueVariant;
                             dictChanged = true;
@@ -837,7 +846,7 @@ internal static class VariantExt
         var rowCount = arrValue.Length;
         if (ImGui.TreeNode($"[{rowCount}]{label}"))
         {
-            if (ImGui.BeginTable(label, 2, TableFlags, new System.Numerics.Vector2(0.0f, 240.0f)))
+            if (ImGui.BeginTable(label, 2, TableFlags, new System.Numerics.Vector2(0.0f, MaxColumns * RowWidth)))
             {
                 ImGui.TableSetupScrollFreeze(0, 1);
                 ImGui.TableSetupColumn("Index", ImGuiTableColumnFlags.WidthFixed, 64);
@@ -882,6 +891,8 @@ internal static class VariantExt
 
         return valueChanged;
     }
+    
+    private static float RowWidth => ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
 
     private static bool ImEditGodotArray(string label, ref Godot.Collections.Array arrValue)
     {
@@ -889,7 +900,7 @@ internal static class VariantExt
         var rowCount = arrValue.Count;
         if (ImGui.TreeNode($"[{rowCount}]{label}"))
         {
-            if (ImGui.BeginTable(label, 2, TableFlags, new System.Numerics.Vector2(0.0f, 240.0f)))
+            if (ImGui.BeginTable(label, 2, TableFlags, new System.Numerics.Vector2(0.0f, MaxColumns * RowWidth)))
             {
                 ImGui.TableSetupScrollFreeze(0, 1);
                 ImGui.TableSetupColumn("Index", ImGuiTableColumnFlags.WidthFixed, 64);

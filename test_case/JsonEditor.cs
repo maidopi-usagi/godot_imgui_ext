@@ -1,10 +1,7 @@
 using Godot;
-using System;
 using Godot.Collections;
 using GodotImGuiExtension;
-using ImGuiNET;
 using MethodTimer;
-using Microsoft.VisualBasic;
 
 public partial class JsonEditor : Node2D
 {
@@ -12,20 +9,32 @@ public partial class JsonEditor : Node2D
 	public Dictionary _testDictionary;
 	
 	[Export]
-	public Godot.Collections.Array _testArray;
+	public Array _testArray;
 
-	[Export(PropertyHint.Range, "-10000,10000,1")]
+	[Export(PropertyHint.Range, "-1000000,1000000,1")]
 	public long LongTest;
-	
+
+	[Export]
+	public string JsonFilePath
+	{
+		get => _jsonFilePath;
+		set
+		{
+			_jsonFilePath = value;
+			var json = Json.ParseString(FileAccess.GetFileAsString(_jsonFilePath));
+			if (json.VariantType != Variant.Type.Nil)
+			{
+				_testDictionary = json.AsGodotDictionary();
+			}
+		}
+	}
+
 	private Variant _jsonData;
-	
+	private string _jsonFilePath = string.Empty;
+
 	public override void _Ready()
 	{
-		var json = Json.ParseString(FileAccess.GetFileAsString("C:/Users/maido/Downloads/data.json"));
-		if (json.VariantType != Variant.Type.Nil)
-		{
-			_testDictionary = json.AsGodotDictionary();
-		}
+		JsonFilePath = "C:/Users/maido/Downloads/data.json";
 	}
 
 	[Time]
