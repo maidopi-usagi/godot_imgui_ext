@@ -1,8 +1,3 @@
-[gd_scene load_steps=2 format=3 uid="uid://83na6b3d50l"]
-
-[ext_resource type="Script" path="res://demo/Demo.cs" id="1_12wjf"]
+[gd_scene format=3 uid="uid://83na6b3d50l"]
 
 [node name="Entry" type="Node"]
-
-[node name="Demo" type="Node" parent="."]
-script = ExtResource("1_12wjf")

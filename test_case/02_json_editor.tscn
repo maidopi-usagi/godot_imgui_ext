@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8yu1oyvl4ybw"]
+
+[ext_resource type="Script" path="res://test_case/JsonEditor.cs" id="1_7ew7f"]
+
+[node name="JsonEditor" type="Node2D"]
+script = ExtResource("1_7ew7f")
+_testDictionary = {}
+_testArray = [0.0, 0, 0.0]

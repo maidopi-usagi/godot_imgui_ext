@@ -11,7 +11,7 @@ internal static class SceneTreeViewer
     public static bool DrawSceneTree(ref List<NodePath> _nodePaths)
     {
         ImGui.Begin("Draw Scene Tree");
-        ImGui.Text($"{string.Join(",", _nodePaths)}");
+        ImGui.Text($"{string.Join(";", _nodePaths)}");
         var clicked = ShowNodeStructure(Root, ref _nodePaths);
         ImGui.End();
         return clicked;
