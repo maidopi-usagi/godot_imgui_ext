@@ -39,11 +39,11 @@ https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/82036697-7662-4
 ## Usage
 
 ## Planned work(May be shipped in an optional package)
-- [ ]Migrate and clean up some existing widgets from my personal project
-   - [ ]Datasheet editing toolset (Excel-like editor with Godot features)
-   - [ ]Runtime logger with filtering and backtraces
-   - [ ]Runtime console
-   - [ ]Resource picker with fuzzy match and filtering
-- [ ]Better profiling tools, with common builtin engine stastics and custom measurement sources
-- [ ]UX improvements
+- [ ] Migrate and clean up some existing widgets from my personal project
+   - [ ] Datasheet editing toolset (Excel-like editor with Godot features)
+   - [ ] Runtime logger with filtering and backtraces
+   - [ ] Runtime console
+   - [ ] Resource picker with fuzzy match and filtering
+- [ ] Better profiling tools, with common builtin engine stastics and custom measurement sources
+- [ ] UX improvements
 New ideas are also welcomed~
