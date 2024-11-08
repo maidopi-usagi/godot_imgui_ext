@@ -51,5 +51,8 @@ https://github.com/maidopi-usagi/godot_imgui_ext/assets/33864304/82036697-7662-4
 - [ ] Better profiling tools, with common builtin engine stastics and custom measurement sources
 - [ ] UX improvements
 - [ ] ImPlot branch
+- [x] Hexa.NET.ImGui branch at https://github.com/maidopi-usagi/imgui-godot with ImGuizmo ImNodes
+
+![image](https://github.com/user-attachments/assets/38bf3b7a-702f-4254-9162-e9070fabcccb)
 
 New ideas are also welcomed~
